@@ -90,19 +90,20 @@ def create_workflow(db: SQLDatabase):
             return {"messages": [AIMessage(content=f"Error generating query: {str(e)}")]}
 
     check_query_system_prompt = """
-    You are a SQL expert for a {dialect} database.
-    Review the provided SQL query for common errors, including:
-    - NOT IN with NULL values
-    - UNION instead of UNION ALL
-    - BETWEEN for exclusive ranges
-    - Data type mismatches in predicates
-    - Incorrect identifier quoting
-    - Wrong number of function arguments
-    - Improper casting
-    - Incorrect join columns
-
-    If errors are found, rewrite the query to fix them. If no errors, return the original query.
-    Return only the SQL query as plain text, without explanations or markdown.
+You are a SQL expert for a {dialect} database. You are provided with a SQL query and the database schema. Your task is to:
+Review the query for common errors, including:
+NOT IN with NULL values
+UNION instead of UNION ALL
+BETWEEN for exclusive ranges
+Data type mismatches in predicates
+Incorrect identifier quoting
+Wrong number of function arguments
+Improper casting
+Incorrect join columns
+Validate that all column names and table names match the provided schema exactly.
+If any of the above errors are found, rewrite the query to fix them while preserving the query's intent.
+If no errors are found or if column names are correct per the schema, return the original query unchanged.
+Return only the SQL query as plain text, without explanations or markdown.
     """.format(dialect=db.dialect)
 
     def check_query(state: MessagesState):
@@ -114,6 +115,10 @@ def create_workflow(db: SQLDatabase):
                 logger.error("No valid query found | node=check_query")
                 return {"messages": [AIMessage(content="Error: No query generated")]}
             user_message = HumanMessage(content=last_message.content)
+            # Log schema for debugging
+            schema_message = next((msg for msg in state["messages"] if "CREATE TABLE" in msg.content), None)
+            if schema_message:
+                logger.debug(f"Schema used for check_query | schema=\n{schema_message.content}")
             logger.debug(f"Checking query | query=\n{last_message.content}")
             response = llm.invoke([system_message, user_message])
             checked_query = response.content.strip()
