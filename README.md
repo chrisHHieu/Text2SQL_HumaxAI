@@ -99,10 +99,3 @@ Logs are stored in the `logs/` directory with daily rotation (max 5MB per file, 
 * coloredlogs
 
 ---
-
-## ⚠️ Notes
-
-* Ensure the **SQL Server ODBC driver** is installed on your system.
-* The application uses `gpt-4.1-mini` from OpenAI.
-* You can update the model in `workflow.py` if needed.
-* **Do not expose sensitive information** in the `.env` file publicly.
