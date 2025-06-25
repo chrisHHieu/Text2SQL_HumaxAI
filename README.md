@@ -55,7 +55,7 @@ genai_project/
 5. **Run the application:**
 
    ```bash
-   python -m src/main.py
+   python -m src.main
    ```
 
    The API will be available at: [http://localhost:8000](http://localhost:8000)
